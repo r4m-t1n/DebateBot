@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 import pyrogram
 from google import genai
-from google.genai import types
+from cerebras.cloud.sdk import AsyncCerebras
 
 load_dotenv()
 
@@ -21,23 +21,21 @@ bot = pyrogram.Client(
     api_hash=BOT_API_HASH,
     bot_token=BOT_TOKEN
 )
-client = genai.Client(api_key=LLM_API)
-
-system_prompt = ("Always explain shortly")
-
-chat = client.chats.create(
-    model="gemini-2.5-flash-lite",
-    config=types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        temperature=0.8,
-        max_output_tokens=800
-    )
-)
+client = AsyncCerebras(api_key=LLM_API)
 
 @bot.on_message()
 async def main(bot: pyrogram.Client, message: pyrogram.types.Message):
-    llm_response = chat.send_message(message.text.lower())
 
-    await message.reply_text(llm_response.text)
+    response = await client.chat.completions.create(
+        model="llama3.1-8b",
+        messages=[{
+            "role": "user",
+            "content": message.text
+        }],
+        temperature=0.4,
+        max_tokens=800
+    )
+
+    await message.reply_text(response.choices[0].message.content, quote=True)
 
 bot.run()
