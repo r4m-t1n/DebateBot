@@ -11,7 +11,7 @@ ADMIN_ID = os.getenv("ADMIN_ID")
 
 BOT_API_ID = os.getenv("BOT_API_ID")
 BOT_API_HASH = os.getenv("BOT_API_HASH")
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+PHONE_NUMBER = os.getenv("PHONE_NUMBER")
 
 LLM_API = os.getenv("LLM_API")
 
@@ -19,7 +19,7 @@ bot = pyrogram.Client(
     "DebateBot",
     api_id=BOT_API_ID,
     api_hash=BOT_API_HASH,
-    bot_token=BOT_TOKEN
+    phone_number=PHONE_NUMBER
 )
 client = AsyncCerebras(api_key=LLM_API)
 
