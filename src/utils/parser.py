@@ -33,3 +33,9 @@ def split_args(text: str):
         args.append(word)
 
     return args
+
+def check_triggers(text: str, triggers: list[str]):
+    for trigger in triggers:
+        if trigger in text:
+            return True
+    return False
