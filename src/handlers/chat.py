@@ -1,24 +1,25 @@
 import pyrogram
 from pyrogram import filters
-from config import bot, client, db, MODEL_NAME
+from config import bot
+from services.llm import Chat, llm_check_trigger
 from utils.parser import check_triggers
+from utils.redis_utils import get_all_triggers
 
 @bot.on_message(~filters.me)
 async def read_messages(bot: pyrogram.Client, message: pyrogram.types.Message):
-    triggers = await db.lrange("triggers", 0, -1)
+    triggers = await get_all_triggers()
     triggered = check_triggers(message.text, triggers)
 
     if not triggered:
         return
+    
+    related_to_subjects = await llm_check_trigger(message.text)
 
-    response = await client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[{
-            "role": "user",
-            "content": message.text
-        }],
-        temperature=0,
-        max_tokens=800
-    )
+    if not related_to_subjects:
+        return
+    
+    chat = Chat(message.from_user.id)
 
-    await message.reply_text(response.choices[0].message.content, quote=True)
+    response = await chat.respond_message(message.text)
+
+    await message.reply_text(response, quote=True)
