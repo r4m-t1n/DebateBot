@@ -1,5 +1,5 @@
 from config import client, prompts, MODEL_NAME
-from utils.redis_utils import get_messages, get_all_subjects, save_to_redis
+from utils.redis_utils import get_chat_history, get_all_subjects, save_json, save_to_redis
 from utils.parser import parse_subjects, export_subjects
 
 class Chat:
@@ -7,10 +7,9 @@ class Chat:
         self.user_id = user_id
         self.messages = []
 
-    @save_to_redis
     async def initialize(self):
-        subjects = await export_subjects()
-        self.messages = await get_messages(self.user_id)
+        all_subjects = await export_subjects()
+        self.messages = await get_chat_history(self.user_id)
 
         if self.messages != []:
             return
@@ -18,9 +17,10 @@ class Chat:
         self.messages = [{
             "role": "system",
             "content": prompts["system_debate"].format(
-                "\n".join(subjects)
+                all_subjects="\n".join(all_subjects)
             )
         }]
+        await save_json(self.user_id, self.messages)
 
     @save_to_redis
     async def _append_users_msg(self, message: str):
