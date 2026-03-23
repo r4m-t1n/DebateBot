@@ -34,7 +34,7 @@ async def save_settings(message: pyrogram.types.Message, mode: str):
     }[mode]
 
     await db.rpush(f"{mode}:{level}", subject)
-    await db.rpush("triggers", " ".join(triggers))
+    await db.rpush("triggers", *triggers)
 
     return await respond(message,
         messages["set_successful"].format(
