@@ -11,10 +11,6 @@ async def get_all_triggers():
     triggers = await db.lrange("triggers", 0, -1)
     return triggers
 
-async def get_messages(user_id: int):
-    messages = await db.lrange(f"chat:{user_id}", 0, -1)
-    return messages
-
 async def get_raw_subjects(mode: str):
     raw_subjects = list()
     for level in range(1, 6): #5 criticism levels and 5 defendant levels
@@ -27,6 +23,9 @@ async def get_all_subjects():
     defendants = await get_raw_subjects("defendant")
     return criticisms + defendants
 
+async def save_json(user_id: int, data):
+    await db.set(f"chat:{user_id}", json.dumps(data), ex=EXPIRE_TIME)
+
 def save_to_redis(func):
     async def wrapper(self, *args, **kwargs):
         user_id = self.user_id
@@ -34,10 +33,7 @@ def save_to_redis(func):
         message = await func(self, *args, **kwargs)
         self.messages.append(message)
 
-        data = await get_chat_history(user_id)
-        data.append(message)
-
-        await db.set(f"chat:{user_id}", json.dumps(data), ex=EXPIRE_TIME)
+        await save_json(user_id, self.messages)
 
         return message
 
