@@ -41,7 +41,7 @@ class Chat:
         response = await client.chat.completions.create(
             model=MODEL_NAME,
             messages=self.messages,
-            temperature=0,
+            temperature=0.2,
             max_tokens=800
         )
 
@@ -67,7 +67,7 @@ async def llm_check_trigger(text: str):
                     text, subjects
                 )
             }],
-        temperature=0,
+        temperature=0.2,
         max_tokens=10
     )
     result = response.choices[0].message.content.strip().lower()
