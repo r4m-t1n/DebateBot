@@ -32,3 +32,6 @@ set_successful: |
 
     triggers:
     {triggers}
+
+default_txt_tokens_limit_exceeded:
+    :)))
