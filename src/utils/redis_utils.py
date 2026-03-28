@@ -7,6 +7,10 @@ async def get_chat_history(user_id: int):
     data = await db.get(f"chat:{user_id}")
     return json.loads(data) if data else []
 
+async def user_available(user_id: int):
+    result = await db.exists(f"chat:{user_id}")
+    return result > 0
+
 async def get_all_triggers():
     triggers = await db.lrange("triggers", 0, -1)
     return triggers
