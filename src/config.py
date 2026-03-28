@@ -3,6 +3,7 @@ import os
 import pyrogram
 from redis.asyncio import Redis
 from cerebras.cloud.sdk import AsyncCerebras
+from cerebras.cloud.sdk import RateLimitError as TokensLimitExceeded
 from utils.loader import load_yaml
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))

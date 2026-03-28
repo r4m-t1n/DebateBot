@@ -1,4 +1,4 @@
-from config import client, prompts, MODEL_NAME
+from config import client, prompts, messages, MODEL_NAME, TokensLimitExceeded
 from utils.redis_utils import get_chat_history, get_all_subjects, save_json, save_to_redis
 from utils.parser import parse_subjects, export_subjects
 
@@ -37,41 +37,47 @@ class Chat:
         }
 
     async def respond_message(self, message: str):
-        await self._append_users_msg(message)
-        response = await client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=self.messages,
-            temperature=0.2,
-            max_tokens=800
-        )
+        try:
+            response = await client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=self.messages,
+                temperature=0,
+                max_tokens=800
+            )
 
-        response = response.choices[0].message.content
+            response = response.choices[0].message.content
 
-        await self._append_responded_msg(response)
-        return response
+            await self._append_users_msg(message)
+            await self._append_responded_msg(response)
+            return response
+        except TokensLimitExceeded:
+            return messages["default_txt_tokens_limit_exceeded"]
 
 
 async def llm_check_trigger(text: str):
     subjects = await get_all_subjects()
     subjects = parse_subjects(subjects)
 
-    response = await client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {
-                "role": "system",
-                "content": prompts["system_check_trigger"]
-            }, {
-                "role": "user",
-                "content": "user's content: {}\n our subjects: {}".format(
-                    text, subjects
-                )
-            }],
-        temperature=0.2,
-        max_tokens=10
-    )
-    result = response.choices[0].message.content.strip().lower()
+    try:
+        response = await client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompts["system_check_trigger"]
+                }, {
+                    "role": "user",
+                    "content": "user's content: {}\n our subjects: {}".format(
+                        text, subjects
+                    )
+                }],
+            temperature=0,
+            max_tokens=10
+        )
+        result = response.choices[0].message.content.strip().lower()
 
-    if "true" in result:
-        return True
-    return False
+        if "true" in result:
+            return True
+        return False
+    except TokensLimitExceeded:
+        return False
